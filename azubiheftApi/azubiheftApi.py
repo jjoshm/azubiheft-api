@@ -3,7 +3,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from .errors import AuthError
+from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
 
 
@@ -13,9 +13,8 @@ class Session():
 
     def login(self, username: str, password: str):
         if(self.isLoggedIn()):
-            raise AuthError("azubiheft: already logged in. Logout first ...")
+            raise AuthError("already logged in. Logout first")
 
-        print("azubiheft: logging in ...")
         self.session = requests.session()
 
         loginPageHtml = self.session.get(
@@ -43,18 +42,14 @@ class Session():
 
         self.session.post('https://www.azubiheft.de/Login.aspx',
                           headers=headers, data=formData)
-        if(self.isLoggedIn()):
-            print("azubiheft: login successful ...")
-        else:
-            raise ValueError
+        if(not self.isLoggedIn()):
+            raise AuthError("login failed")
 
     def logout(self):
         if (not self.session):
-            print("azubiheft: cant't logout because not logged in ...")
-            return
+            raise NotLoggedInError("not logged in. Login first")
         self.session.get('https://www.azubiheft.de/Azubi/Abmelden.aspx')
         if (not self.isLoggedIn()):
-            print("azubiheft: logout successful ...")
             self.session = None
 
     def isLoggedIn(self):
@@ -79,7 +74,7 @@ class Session():
             id = soup.find(id="lblNachweisNr")["data-br-nr"]
             return id
         else:
-            print("azubiheft: can't get id because not loggen in ...")
+            raise NotLoggedInError("not logged in. Login first")
 
     def writeReport(self, date: datetime, message: str, time: timedelta):
         if(self.isLoggedIn()):
@@ -92,9 +87,8 @@ class Session():
             formData = {"Seq": 0, "Art_ID": 1, "Abt_ID": 0,
                         "Dauer": TimeHelper.timeDeltaToString(time), "Inhalt": message, "jsVer": 11}
             self.session.post(url, data=formData, headers=headers)
-            print("azubiheft: write successful ...")
         else:
-            print("azubiheft: can't write because not loggen in ...")
+            raise NotLoggedInError("not logged in. Login first")
 
 
 class TimeHelper():
@@ -112,3 +106,5 @@ class TimeHelper():
         if(time < maxTime):
             formatted = ':'.join(str(time).split(':')[:2])
             return formatted
+        else:
+            raise ValueTooLargeError('Max time is ' + str(maxTime))

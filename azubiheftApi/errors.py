@@ -7,3 +7,7 @@ class AuthError(Error):
 class ValueTooLargeError(Error):
    """Raised when the input value is too large"""
    pass
+
+class NotLoggedInError(Error):
+    """Raised when user is not loged in"""
+    pass
