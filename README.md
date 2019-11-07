@@ -1,5 +1,5 @@
 # azubiheft-api
-Custom Api for azubiheft.de
+Api for azubiheft.de
 
 ## install with pip
 <code>pip install git+https://github.com/joshmuente/azubiheft-api</code>
