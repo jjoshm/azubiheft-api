@@ -49,6 +49,9 @@ class Session():
             print("azubiheft: login failed ...")
 
     def logout(self):
+        if (not self.session):
+            print("azubiheft: cant't logout because not logged in ...")
+            return
         self.session.get('https://www.azubiheft.de/Azubi/Abmelden.aspx')
         if (not self.isLoggedIn()):
             print("azubiheft: logout successful ...")
