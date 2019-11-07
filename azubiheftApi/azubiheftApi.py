@@ -3,6 +3,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from .errors import AuthError
 import time
 
 
@@ -12,8 +13,7 @@ class Session():
 
     def login(self, username: str, password: str):
         if(self.isLoggedIn()):
-            print("azubiheft: already logged in. Logout first ...")
-            return
+            raise AuthError("azubiheft: already logged in. Logout first ...")
 
         print("azubiheft: logging in ...")
         self.session = requests.session()
@@ -46,7 +46,7 @@ class Session():
         if(self.isLoggedIn()):
             print("azubiheft: login successful ...")
         else:
-            print("azubiheft: login failed ...")
+            raise ValueError
 
     def logout(self):
         if (not self.session):
@@ -90,7 +90,7 @@ class Session():
             }
 
             formData = {"Seq": 0, "Art_ID": 1, "Abt_ID": 0,
-                        "Dauer": "00:45", "Inhalt": message, "jsVer": 11}
+                        "Dauer": TimeHelper.timeDeltaToString(time), "Inhalt": message, "jsVer": 11}
             self.session.post(url, data=formData, headers=headers)
             print("azubiheft: write successful ...")
         else:
@@ -98,14 +98,17 @@ class Session():
 
 
 class TimeHelper():
-    @classmethod
-    def dateTimeToString(cls, date: datetime):
+    @staticmethod
+    def dateTimeToString(date: datetime):
         return date.strftime("%Y%m%d")
 
-    @classmethod
-    def getActualTimestamp(cls):
+    @staticmethod
+    def getActualTimestamp():
         return str(int(time.time()))
 
-    @classmethod
-    def timeDeltaToString(cls, date: datetime):
-        pass
+    @staticmethod
+    def timeDeltaToString(time: timedelta):
+        maxTime = timedelta(hours=19, minutes=59)
+        if(time < maxTime):
+            formatted = ':'.join(str(time).split(':')[:2])
+            return formatted
