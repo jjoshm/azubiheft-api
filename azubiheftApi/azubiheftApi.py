@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # azubiheft.com web-api
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
