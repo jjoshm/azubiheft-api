@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
+import re
 
 
 class Session():
@@ -74,6 +75,22 @@ class Session():
             soup = BeautifulSoup(reportHtml, 'html.parser')
             id = soup.find(id="lblNachweisNr")["data-br-nr"]
             return id
+        else:
+            raise NotLoggedInError("not logged in. Login first")
+
+    def getSubjects(self):
+        if(self.isLoggedIn()):
+            subjectSetupHtml = self.session.get(
+                'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
+            ).text
+            soup = BeautifulSoup(subjectSetupHtml, 'html.parser')
+            subjects = soup.find_all('input', {'id': re.compile('^txt')})
+            dicts = {}
+            for i in range(len(subjects) - 1):
+                dicts[i + 1] = subjects[i].get('value')
+
+            return dicts
+
         else:
             raise NotLoggedInError("not logged in. Login first")
 
