@@ -20,7 +20,12 @@ login with your azubiheft account
 azubiheft.login("my@email.com", "mypassword")
 ```
 
+get subjects
+```python
+subjects = azubiheft.getSubjects()
+```
+
 and write a new report
 ```python
-azubiheft.writeReport(datetime.now(), "hello world", timedelta(hours=1, minutes=15))
+azubiheft.writeReport(datetime.now(), "hello world", timedelta(hours=1, minutes=15), subjects[0].id)
 ```
