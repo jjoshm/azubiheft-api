@@ -8,12 +8,11 @@ from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
 import re
 
-
 class Session():
     def __init__(self):
         self.session: requests.sessions.Session = None
 
-    def login(self, username: str, password: str):
+    def login(self, username: str, password: str) -> None:
         if(self.isLoggedIn()):
             raise AuthError("already logged in. Logout first")
 
@@ -47,14 +46,14 @@ class Session():
         if(not self.isLoggedIn()):
             raise AuthError("login failed")
 
-    def logout(self):
+    def logout(self) -> None:
         if (not self.session):
             raise NotLoggedInError("not logged in. Login first")
         self.session.get('https://www.azubiheft.de/Azubi/Abmelden.aspx')
         if (not self.isLoggedIn()):
             self.session = None
 
-    def isLoggedIn(self):
+    def isLoggedIn(self) -> bool:
         if (not self.session):
             return False
 
@@ -67,7 +66,7 @@ class Session():
 
         return False
 
-    def getReportWeekId(self, date: datetime):
+    def getReportWeekId(self, date: datetime) -> str:
         if(self.isLoggedIn()):
             url = "https://www.azubiheft.de/Azubi/Wochenansicht.aspx?T=" + \
                 TimeHelper.dateTimeToString(date)
@@ -78,7 +77,7 @@ class Session():
         else:
             raise NotLoggedInError("not logged in. Login first")
 
-    def getSubjects(self):
+    def getSubjects(self) -> dict:
         if(self.isLoggedIn()):
             subjectSetupHtml = self.session.get(
                 'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
@@ -94,7 +93,7 @@ class Session():
         else:
             raise NotLoggedInError("not logged in. Login first")
 
-    def writeReport(self, date: datetime, message: str, time: timedelta):
+    def writeReport(self, date: datetime, message: str, time: timedelta) -> None:
         if(self.isLoggedIn()):
             url = "https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum=" + TimeHelper.dateTimeToString(
                 date) + " &BrNr=" + self.getReportWeekId(date) + "&T=" + TimeHelper.getActualTimestamp()
@@ -111,15 +110,15 @@ class Session():
 
 class TimeHelper():
     @staticmethod
-    def dateTimeToString(date: datetime):
+    def dateTimeToString(date: datetime) -> str:
         return date.strftime("%Y%m%d")
 
     @staticmethod
-    def getActualTimestamp():
+    def getActualTimestamp() -> str:
         return str(int(time.time()))
 
     @staticmethod
-    def timeDeltaToString(time: timedelta):
+    def timeDeltaToString(time: timedelta) -> str:
         maxTime = timedelta(hours=19, minutes=59)
         if(time < maxTime):
             formatted = ':'.join(str(time).split(':')[:2])
