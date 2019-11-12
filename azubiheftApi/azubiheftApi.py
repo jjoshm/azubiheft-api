@@ -83,12 +83,14 @@ class Session():
                 'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
             ).text
             soup = BeautifulSoup(subjectSetupHtml, 'html.parser')
-            subjects = soup.find_all('input', {'id': re.compile('^txt')})
-            dicts = {}
-            for i in range(len(subjects) - 1):
-                dicts[i + 1] = subjects[i].get('value')
+            subjectElements = soup.find(id='divSchulfach').find_all('input')
+            
+            subjects = []
+            for subjectElement in subjectElements:
+                subject = {"id": subjectElement["data-default"], "name": subjectElement["value"]}
+                subjects.append(subject)
 
-            return dicts
+            return subjects
 
         else:
             raise NotLoggedInError("not logged in. Login first")
