@@ -77,7 +77,7 @@ class Session():
         else:
             raise NotLoggedInError("not logged in. Login first")
 
-    def getSubjects(self) -> dict:
+    def getSubjects(self) -> list:
         if(self.isLoggedIn()):
             subjectSetupHtml = self.session.get(
                 'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
