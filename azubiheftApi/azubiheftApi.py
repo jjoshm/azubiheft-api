@@ -8,6 +8,7 @@ from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
 import re
 
+
 class Session():
     def __init__(self):
         self.session: requests.sessions.Session = None
@@ -79,23 +80,33 @@ class Session():
 
     def getSubjects(self) -> list:
         if(self.isLoggedIn()):
+            staticSubjects = [
+                {'id': 1, 'name': 'Betrieb'},
+                {'id': 2, 'name': 'Schule'},
+                {'id': 3, 'name': 'ÜBA'},
+                {'id': 4, 'name': 'Urlaub'},
+                {'id': 5, 'name': 'Feiertag'},
+                {'id': 6, 'name': 'Arbeitsunfähig'},
+                {'id': 7, 'name': 'Frei'}
+            ]
             subjectSetupHtml = self.session.get(
                 'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
             ).text
             soup = BeautifulSoup(subjectSetupHtml, 'html.parser')
             subjectElements = soup.find(id='divSchulfach').find_all('input')
-            
+
             subjects = []
             for subjectElement in subjectElements:
-                subject = {"id": subjectElement["data-default"], "name": subjectElement["value"]}
+                subject = {
+                    "id": subjectElement["data-default"], "name": subjectElement["value"]}
                 subjects.append(subject)
 
-            return subjects
+            return staticSubjects + subjects
 
         else:
             raise NotLoggedInError("not logged in. Login first")
 
-    def writeReport(self, date: datetime, message: str, time: timedelta) -> None:
+    def writeReport(self, date: datetime, message: str, time: timedelta, type: int = 1) -> None:
         if(self.isLoggedIn()):
             url = "https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum=" + TimeHelper.dateTimeToString(
                 date) + " &BrNr=" + self.getReportWeekId(date) + "&T=" + TimeHelper.getActualTimestamp()
@@ -103,7 +114,7 @@ class Session():
                 'content-type': 'application/x-www-form-urlencoded'
             }
 
-            formData = {"Seq": 0, "Art_ID": 1, "Abt_ID": 0,
+            formData = {"Seq": 0, "Art_ID": type, "Abt_ID": 0,
                         "Dauer": TimeHelper.timeDeltaToString(time), "Inhalt": message, "jsVer": 11}
             self.session.post(url, data=formData, headers=headers)
         else:
