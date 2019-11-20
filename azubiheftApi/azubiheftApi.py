@@ -138,11 +138,11 @@ class Session():
                     postText = post[i].get_text()
                     durText = dur[i].get_text()
 
-            print({
+            return {
                 "type": typeText,
                 "post": postText,
                 "dur": durText
-            })
+            }
 
         else:
             raise NotLoggedInError("not logged in. Login first")
