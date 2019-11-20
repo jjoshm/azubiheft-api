@@ -120,6 +120,33 @@ class Session():
         else:
             raise NotLoggedInError("not logged in. Login first")
 
+    def getReport(self, date: datetime):
+        if(self.isLoggedIn()):
+            url = "https://www.azubiheft.de/Azubi/Tagesbericht.aspx?Datum=" + \
+                TimeHelper.dateTimeToString(date)
+            reportHtml = self.session.get(url).text
+            soup = BeautifulSoup(reportHtml, 'html.parser')
+            type = soup.find("table", class_='myTable').find_all(
+                'div', class_='row1')
+
+            post = soup.find("table", class_='myTable').find_all(
+                'div', class_='row7')
+            dur = soup.find("table", class_='myTable').find_all(
+                'div', class_='row2')
+
+            for i in range(len(type)):
+                if i == 0:
+                    continue
+
+                typeText = type[i].get_text()
+                postText = post[i].get_text()
+                durText = dur[i].get_text()
+
+            return {
+                "type": typeText,
+                "post": postText,
+                "dur": durText
+            }
 
 class TimeHelper():
     @staticmethod
