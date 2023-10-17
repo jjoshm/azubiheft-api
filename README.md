@@ -1,10 +1,13 @@
 # azubiheft-api
+
 Api for azubiheft.de
 
 ## install with pip
-<code>later</code>
+
+`<code>`pip install azubiheftApi`</code>`
 
 ## usage example code
+
 ```python
 from azubiheftApi import azubiheftApi
 from datetime import datetime
