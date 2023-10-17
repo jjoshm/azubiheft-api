@@ -1,9 +1,9 @@
 # Azubiheft Web API Wrapper
 
 
-This library provides a Python wrapper for the azubiheft.com web API. With this library, developers can easily manage their Ausbildung (training) reports through a script, allowing for enhanced automation and better control over their Ausbildung documentation.
+This library provides a Python wrapper for azubiheft.com. With this library, developers can easily manage their Ausbildung (training) reports through a script, allowing for enhanced automation and better control over their Ausbildung documentation.
 
-> **Note**: This repository is a fork of [joshmuente/azubiheft-api](https://github.com/joshmuente/azubiheft-api). Credits to the original author.
+> 🚀 **Note**: This API wrapper is unofficial and independent of the official Azubiheft platform. This repository stands as a tribute to [joshmuente/azubiheft-api](https://github.com/joshmuente/azubiheft-api). Heartfelt thanks to the original creator.
 
 ## 📖 About Azubiheft
 
