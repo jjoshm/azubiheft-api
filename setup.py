@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="azubiheftApi",
-    version="0.0.3",
+    version="0.0.4",
     author="Leon Kohlhaussen",
     author_email="kohli.leon@gmail.com",
     description="Azubiheft.de custom api",
