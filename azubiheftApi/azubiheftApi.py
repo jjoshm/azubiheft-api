@@ -7,6 +7,14 @@ from datetime import datetime, timedelta
 from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
 import re
+from typing import List
+
+class Entry:
+    def __init__(self, date: datetime, message: str, time_spent: str, entry_type: int):
+        self.date = date
+        self.message = message
+        self.time_spent = time_spent
+        self.type = entry_type
 
 
 class Session():
@@ -106,19 +114,43 @@ class Session():
         else:
             raise NotLoggedInError("not logged in. Login first")
 
-    def writeReport(self, date: datetime, message: str, time: timedelta, type: int = 1) -> None:
-        if(self.isLoggedIn()):
-            url = "https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum=" + TimeHelper.dateTimeToString(
-                date) + " &BrNr=" + self.getReportWeekId(date) + "&T=" + TimeHelper.getActualTimestamp()
-            headers = {
-                'content-type': 'application/x-www-form-urlencoded'
+    def writeReports(self, entries: List[Entry]) -> None:
+        if not self.isLoggedIn():
+            raise NotLoggedInError("not logged in. Login first")
+
+        headers = {
+            'x-my-ajax-request': 'ajax',
+            'Origin': 'https://www.azubiheft.de',
+            'Referer': 'https://www.azubiheft.de/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
+        }
+
+        for entry in entries:
+            date_str = TimeHelper.dateTimeToString(entry.date)
+            week_number = self.getReportWeekId(entry.date)
+            url = f"https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={date_str}&BrNr={week_number}&BrSt=1&BrVorh=Yes&T={TimeHelper.getActualTimestamp()}"
+
+            formData = {
+                'disablePaste': '0',
+                'Seq': '0',
+                'Art_ID': str(entry.type),
+                'Abt_ID': '0',
+                'Dauer': entry.time_spent,
+                'Inhalt': entry.message,
+                'jsVer': '12'
             }
 
-            formData = {"Seq": 0, "Art_ID": type, "Abt_ID": 0,
-                        "Dauer": TimeHelper.timeDeltaToString(time), "Inhalt": message, "jsVer": 11}
-            self.session.post(url, data=formData, headers=headers)
-        else:
-            raise NotLoggedInError("not logged in. Login first")
+            response = self.session.post(url, headers=headers, data=formData)
+            if response.status_code != 200:
+                print(f"Failed to add entry for date {date_str}. Response code: {response.status_code}")
+                
+    def writeReport(self, date: datetime, message: str, time_spent: str, entry_type: int) -> None:
+        entry = Entry(date, message, time_spent, entry_type)
+        self.writeReports([entry])
 
     def getReport(self, date: datetime):
         if(self.isLoggedIn()):
@@ -132,21 +164,26 @@ class Session():
             post = tabel.find_all('div', class_='row7')
             dur = tabel.find_all('div', class_='row2')
 
+            reports = []
+
             for i in range(len(type)):
-                if i:
-                    typeText = type[i].get_text()
-                    postText = post[i].get_text()
-                    durText = dur[i].get_text()
+                typeText = type[i].get_text()
+                postText = post[i].get_text()
+                durText = dur[i].get_text()
 
-            return {
-                "type": typeText,
-                "post": postText,
-                "dur": durText
-            }
+                if durText != "00:00":
+                    reports.append({
+                        "type": typeText,
+                        "post": postText,
+                        "dur": durText
+                    })
 
+            if len(reports) == 0:
+                print("No Reports")
+            else:
+                return reports
         else:
             raise NotLoggedInError("not logged in. Login first")
-
 
 class TimeHelper():
     @staticmethod
