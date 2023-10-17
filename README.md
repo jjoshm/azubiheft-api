@@ -2,7 +2,7 @@
 Api for azubiheft.de
 
 ## install with pip
-<code>pip install git+https://github.com/joshmuente/azubiheft-api</code>
+<code>later</code>
 
 ## usage
 simply import the module
