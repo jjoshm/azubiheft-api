@@ -1,47 +1,64 @@
-# azubiheft-api
+# Azubiheft Web API Wrapper
 
-Api for azubiheft.de
 
-## install with pip
+This library provides a Python wrapper for the azubiheft.com web API. With this library, developers can easily manage their Ausbildung (training) reports through a script, allowing for enhanced automation and better control over their Ausbildung documentation.
 
-```
+> **Note**: This repository is a fork of [joshmuente/azubiheft-api](https://github.com/joshmuente/azubiheft-api). Credits to the original author.
+
+## 📖 About Azubiheft
+
+Azubiheft brings a streamlined online approach to training documentation. Designed for businesses, instructors, and apprentices, it offers an effortless way to manage every training entry online. With Azubiheft, you're always one step ahead with all your training data right at your fingertips.
+
+## 🛠 Installation
+
+```bash
 pip install azubiheftApi
 ```
 
-## usage example code
+## 🔍 Usage
+
+Here's a quick guide on how to use the `azubiheftApi`:
 
 ```python
 from azubiheftApi import azubiheftApi
 from datetime import datetime
 
 azubiheft = azubiheftApi.Session()
-
 azubiheft.login("yourUserName", "yourPassword")
 
 # Check login status
 print(azubiheft.isLoggedIn())
 
-# Testen Sie die getSubjects-Funktion
+# Get available subjects
 subjects = azubiheft.getSubjects()
 print(subjects)
 
-# Testen Sie die getReport-Funktion
+# Fetch a report by date
 report = azubiheft.getReport(datetime(2023, 10, 19))
 print(report)
 
-# Testen Sie die getReportWeekId-Funktion
+# Get a week's report ID
 week_id = azubiheft.getReportWeekId(datetime.now())
 print(week_id)
 
-# Use the new writeReport method
+# Write a new report entry
 azubiheft.writeReport(datetime(2023, 10, 19), "Hello World", "2:00", 1)
 
-# Get a report
+# Fetch the report again to see changes
 report = azubiheft.getReport(datetime(2023, 10, 19))
 print(report)
 
-# Testen Sie die logout-Funktion
+# Log out from the session
 azubiheft.logout()
-# Sollte False zurückgeben, wenn Sie erfolgreich ausgeloggt sind
+
+# Check login status (should be False after logging out)
 print(azubiheft.isLoggedIn())
 ```
+
+## 🌱 Contribution
+
+Feel free to fork, star, or contribute to this repository. For any bugs or feature requests, please open a new issue.
+
+---
+
+This README uses a mix of emojis for better visualization, mentions the original project (since your repo is a fork), provides a clear and simple installation and usage guide, and is organized into appropriate sections. Make sure to adjust the link placeholder (`path_to_logo_if_any.png`) if you have a logo or simply remove it if not.
