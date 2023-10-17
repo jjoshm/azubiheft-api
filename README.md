@@ -4,7 +4,9 @@ Api for azubiheft.de
 
 ## install with pip
 
-`<code>`pip install azubiheftApi`</code>`
+```
+pip install azubiheftApi
+```
 
 ## usage example code
 
