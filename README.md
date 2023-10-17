@@ -60,5 +60,3 @@ print(azubiheft.isLoggedIn())
 Feel free to fork, star, or contribute to this repository. For any bugs or feature requests, please open a new issue.
 
 ---
-
-This README uses a mix of emojis for better visualization, mentions the original project (since your repo is a fork), provides a clear and simple installation and usage guide, and is organized into appropriate sections. Make sure to adjust the link placeholder (`path_to_logo_if_any.png`) if you have a logo or simply remove it if not.
