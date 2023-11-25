@@ -77,12 +77,31 @@ class Session():
 
     def getReportWeekId(self, date: datetime) -> str:
         if(self.isLoggedIn()):
-            url = "https://www.azubiheft.de/Azubi/Wochenansicht.aspx?T=" + \
-                TimeHelper.dateTimeToString(date)
-            reportHtml = self.session.get(url).text
-            soup = BeautifulSoup(reportHtml, 'html.parser')
-            id = soup.find(id="lblNachweisNr")["data-br-nr"]
-            return id
+            print("Debug: Inside getReportWeekId")
+            url = "https://www.azubiheft.de/Azubi/Ausbildungsnachweise.aspx"
+            print("Debug: URL:", url)
+            overviewHtml = self.session.get(url).text
+            soup = BeautifulSoup(overviewHtml, 'html.parser')
+            weekDivs = soup.find_all("div", class_="mo NBox")
+
+            # Calculate the calendar week number
+            calendar_week = date.isocalendar()[1]
+            year = date.isocalendar()[0]
+
+            for div in weekDivs:
+                kwDiv = div.find("div", class_="sKW")
+                yearDiv = div.find("div", class_="KW").find_all("div")[2]
+
+                if kwDiv and yearDiv:
+                    kw = int(kwDiv.get_text(strip=True))
+                    kwYear = int(yearDiv.get_text(strip=True))
+
+                    if kw == calendar_week and kwYear == year:
+                        weekId = div['onclick'].split("'")[1].split('=')[1]
+                        print("Debug: Report ID:", weekId)
+                        return weekId
+
+            raise ValueError("No report found for the specified week")
         else:
             raise NotLoggedInError("not logged in. Login first")
 
