@@ -74,12 +74,102 @@ class Session():
             return True
 
         return False
+    
+    def _fetch_setup_page_tokens(self):
+        """
+        Fetches the setup page and extracts necessary tokens.
+        Returns a dictionary with '__VIEWSTATE', '__VIEWSTATEGENERATOR', and '__EVENTVALIDATION'.
+        """
+        setup_page = self.session.get('https://www.azubiheft.de/Azubi/SetupSchulfach.aspx')
+        soup = BeautifulSoup(setup_page.text, 'html.parser')
+
+        tokens = {
+            '__VIEWSTATE': soup.find(id="__VIEWSTATE")['value'],
+            '__VIEWSTATEGENERATOR': soup.find(id="__VIEWSTATEGENERATOR")['value'],
+            '__EVENTVALIDATION': soup.find(id="__EVENTVALIDATION")['value']
+        }
+        return tokens
+    
+    def _prepare_subjects_payload(self, subjects, new_subject=None, delete_subject_id=None):
+        """
+        Prepares payload for subject manipulation.
+        - Parameters:
+            subjects: List of current subjects.
+            new_subject: New subject to be added (optional).
+            delete_subject_id: ID of subject to be deleted (optional).
+        """
+        payload = {}
+        for subject in subjects:
+            if delete_subject_id and subject['id'] == delete_subject_id:
+                continue
+            payload[f'ctl00$ContentPlaceHolder1$txt{subject["id"]}'] = subject['name']
+
+        if new_subject:
+            payload['txtNewSubject'] = new_subject
+
+        return payload
+    
+    
+    def add_subject(self, subject_name: str) -> None:
+        if not self.isLoggedIn():
+            raise NotLoggedInError("not logged in. Login first")
+
+        tokens = self._fetch_setup_page_tokens()
+        current_subjects = self.getSubjects()
+        
+        # Generate a unique key for the new subject
+        new_subject_key = f'txt{int(time.time())}'
+        
+        payload = {
+            '__VIEWSTATE': tokens['__VIEWSTATE'],
+            '__VIEWSTATEGENERATOR': tokens['__VIEWSTATEGENERATOR'],
+            '__EVENTVALIDATION': tokens['__EVENTVALIDATION'],
+            new_subject_key: subject_name,  # Add the new subject
+            **{f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"] for subj in current_subjects},
+            'ctl00$ContentPlaceHolder1$cmd_Save': 'Speichern'  # Include the save command
+        }
+        
+
+        response = self.session.post('https://www.azubiheft.de/Azubi/SetupSchulfach.aspx', data=payload)
+        
+        if response.status_code != 200:
+            print("Failed to add subject. Response code:", response.status_code)
+        else:
+            print("Subject added successfully.")
+
+
+
+    def delete_subject(self, subject_id: str) -> None:
+        if not self.isLoggedIn():
+            raise NotLoggedInError("not logged in. Login first")
+
+        tokens = self._fetch_setup_page_tokens()
+        current_subjects = self.getSubjects()
+
+        # Constructing the payload
+        payload = {
+            '__VIEWSTATE': tokens['__VIEWSTATE'],
+            '__VIEWSTATEGENERATOR': tokens['__VIEWSTATEGENERATOR'],
+            '__EVENTVALIDATION': tokens['__EVENTVALIDATION'],
+            'ctl00$ContentPlaceHolder1$HiddenLöschIDs': ',' + subject_id,  # Add leading comma
+            **{f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"] for subj in current_subjects if subj["id"] != subject_id},
+            'ctl00$ContentPlaceHolder1$cmd_Save': 'Speichern'
+        }
+
+        # Sending the request
+        response = self.session.post('https://www.azubiheft.de/Azubi/SetupSchulfach.aspx', data=payload)
+        
+        if response.status_code != 200:
+            print("Failed to delete subject. Response code:", response.status_code)
+        else:
+            print("Subject deleted successfully.")
+
+
+
 
     def getReportWeekId(self, date: datetime) -> str:
         if(self.isLoggedIn()):
-            print("Debug: Inside getReportWeekId")
             url = "https://www.azubiheft.de/Azubi/Ausbildungsnachweise.aspx"
-            print("Debug: URL:", url)
             overviewHtml = self.session.get(url).text
             soup = BeautifulSoup(overviewHtml, 'html.parser')
             weekDivs = soup.find_all("div", class_="mo NBox")
@@ -98,7 +188,6 @@ class Session():
 
                     if kw == calendar_week and kwYear == year:
                         weekId = div['onclick'].split("'")[1].split('=')[1]
-                        print("Debug: Report ID:", weekId)
                         return weekId
 
             raise ValueError("No report found for the specified week")
