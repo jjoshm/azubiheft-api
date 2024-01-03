@@ -36,6 +36,12 @@ print(azubiheft.isLoggedIn())
 subjects = azubiheft.getSubjects()
 print(subjects)
 
+# Add a new subject
+azubiheft.add_subject("New Subject")
+
+# Delete an existing subject by ID
+azubiheft.delete_subject("subjectId")
+
 # Fetch a report by date
 report = azubiheft.getReport(datetime(2023, 10, 19))
 print(report)
@@ -56,6 +62,7 @@ azubiheft.logout()
 
 # Check login status (should be False after logging out)
 print(azubiheft.isLoggedIn())
+
 ```
 
 ## 🌱 Contribution
