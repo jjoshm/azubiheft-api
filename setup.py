@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="azubiheftApi",
-    version="0.0.8",
+    version="0.0.9",
     author="Leon Kohlhaussen",
     author_email="kohli.leon@gmail.com",
     description="Azubiheft.de custom api",
@@ -14,15 +14,15 @@ setuptools.setup(
     url="https://github.com/leonkohli/azubiheft-api",
     packages=setuptools.find_packages(),
     classifiers=[
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3',
-        'Operating System :: OS Independent',
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     install_requires=[
-        'datetime',
-        'bs4',
-        'beautifulsoup4',
-        'requests',
-    ]
+        "datetime",
+        "bs4",
+        "beautifulsoup4",
+        "requests",
+    ],
 )
