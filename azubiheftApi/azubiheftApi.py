@@ -303,13 +303,6 @@ class Session():
         self.writeReports([entry])
 
     def getReport(self, date: datetime, include_formatting: bool = False):
-        """Gets the report for a given date.
-        - Parameters:
-            date: Date for which the report should be retrieved.
-            include_formatting: Whether to include formatting in the report text (optional, default: False).
-        - Returns:
-            List of report entries.
-        """
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
 
@@ -331,9 +324,15 @@ class Session():
             # Extract and format the report text
             report_text_div = entry.find("div", class_="row7 d5")
             if include_formatting:
+                # Replace <br> tags with newline characters
+                for br in report_text_div.find_all("br"):
+                    br.replace_with("\n")
                 # Convert <div> tags to newline characters
-                report_text = '\n'.join(
-                    [div.get_text(strip=True) for div in report_text_div.find_all("div")])
+                report_text = '\n'.join([div.get_text(
+                    strip=True) for div in report_text_div.find_all("div", recursive=False)])
+                # If there are no <div> tags, get the whole text directly
+                if not report_text:
+                    report_text = report_text_div.get_text("\n", strip=True)
             else:
                 # Concatenate all text without formatting
                 report_text = ' '.join(report_text_div.stripped_strings)
