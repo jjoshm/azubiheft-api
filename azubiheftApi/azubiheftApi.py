@@ -20,9 +20,15 @@ class Entry:
 
 class Session():
     def __init__(self):
+        """Initializes the Azubiheft session."""
         self.session: requests.sessions.Session = None
 
     def login(self, username: str, password: str) -> None:
+        """Logs in the user.
+        - Parameters:
+            username: Username of the user.
+            password: Password of the user.
+        """
         if (self.isLoggedIn()):
             raise AuthError("already logged in. Logout first")
 
@@ -33,7 +39,6 @@ class Session():
 
         soup = BeautifulSoup(loginPageHtml.text, 'html.parser')
 
-        """ needed for the login request """
         viewstate = soup.find(id="__VIEWSTATE")['value']
         viewstategenerator = soup.find(id="__VIEWSTATEGENERATOR")['value']
         eventvalidation = soup.find(id="__EVENTVALIDATION")['value']
@@ -57,6 +62,7 @@ class Session():
             raise AuthError("login failed")
 
     def logout(self) -> None:
+        """Logs out the user."""
         if (not self.session):
             raise NotLoggedInError("not logged in. Login first")
         self.session.get('https://www.azubiheft.de/Azubi/Abmelden.aspx')
@@ -64,6 +70,10 @@ class Session():
             self.session = None
 
     def isLoggedIn(self) -> bool:
+        """Checks if the user is logged in.
+        - Returns:
+            True if the user is logged in, False otherwise.
+        """
         if (not self.session):
             return False
 
@@ -113,9 +123,10 @@ class Session():
         return payload
 
     def add_subject(self, subject_name: str) -> None:
-        if not self.isLoggedIn():
-            raise NotLoggedInError("not logged in. Login first")
-
+        """Adds a new subject to the list of subjects.
+        - Parameters:
+            subject_name: Name of the new subject.
+        """
         tokens = self._fetch_setup_page_tokens()
         current_subjects = self.getSubjects()
 
@@ -140,6 +151,10 @@ class Session():
             print("Subject added successfully.")
 
     def delete_subject(self, subject_id: str) -> None:
+        """Deletes a subject from the list of subjects.
+        - Parameters:
+            subject_id: ID of the subject to be deleted.
+        """
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
 
@@ -166,6 +181,12 @@ class Session():
             print("Subject deleted successfully.")
 
     def getReportWeekId(self, date: datetime) -> str:
+        """Gets the week ID for a given date.
+        - Parameters:
+            date: Date for which the week ID should be retrieved.
+        - Returns:
+            Week ID for the given date.
+        """
         if (self.isLoggedIn()):
             url = "https://www.azubiheft.de/Azubi/Ausbildungsnachweise.aspx"
             overviewHtml = self.session.get(url).text
@@ -193,6 +214,10 @@ class Session():
             raise NotLoggedInError("not logged in. Login first")
 
     def getSubjects(self) -> list:
+        """Gets the list of subjects.
+        - Returns:
+            List of subjects.
+        """
         if (self.isLoggedIn()):
             staticSubjects = [
                 {'id': 1, 'name': 'Betrieb'},
@@ -221,6 +246,10 @@ class Session():
             raise NotLoggedInError("not logged in. Login first")
 
     def writeReports(self, entries: List[Entry]) -> None:
+        """Writes a list of reports to the Azubiheft.
+        - Parameters:
+            entries: List of reports to be written.
+        """
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
 
@@ -263,10 +292,24 @@ class Session():
                       date_str}. Response code: {response.status_code}")
 
     def writeReport(self, date: datetime, message: str, time_spent: str, entry_type: int) -> None:
+        """Writes a report to the Azubiheft.
+        - Parameters:
+            date: Date of the report.
+            message: Message of the report.
+            time_spent: Time spent on the report.
+            entry_type: Type of the report.
+        """
         entry = Entry(date, message, time_spent, entry_type)
         self.writeReports([entry])
 
     def getReport(self, date: datetime, include_formatting: bool = False):
+        """Gets the report for a given date.
+        - Parameters:
+            date: Date for which the report should be retrieved.
+            include_formatting: Whether to include formatting in the report text (optional, default: False).
+        - Returns:
+            List of report entries.
+        """
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
 
