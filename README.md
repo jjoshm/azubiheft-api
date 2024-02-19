@@ -26,7 +26,10 @@ Here's a quick guide on how to use the `azubiheftApi`:
 from azubiheftApi import azubiheftApi
 from datetime import datetime
 
+# Initialize session
 azubiheft = azubiheftApi.Session()
+
+# Login
 azubiheft.login("yourUserName", "yourPassword")
 
 # Check login status
@@ -52,16 +55,23 @@ print(week_id)
 
 # Write a new report entry
 azubiheft.writeReport(datetime(2023, 10, 19), "Hello World", "2:00", 1)
+# its also possible to format the text using \n or just like this
+# """
+# Hello World
+# This is a new line
+# """
 
 # Fetch the report again to see changes
-report = azubiheft.getReport(datetime(2023, 10, 19))
+report = azubiheft.getReport(datetime(2023, 10, 19), include_formatting=True)  #  include_formatting=True to include formatting
 print(report)
+
 
 # Log out from the session
 azubiheft.logout()
 
 # Check login status (should be False after logging out)
 print(azubiheft.isLoggedIn())
+
 
 ```
 
