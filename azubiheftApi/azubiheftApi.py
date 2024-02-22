@@ -267,7 +267,7 @@ class Session():
         for entry in entries:
             date_str = TimeHelper.dateTimeToString(entry.date)
             week_number = self.getReportWeekId(entry.date)
-            url = f"https: //www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={date_str}&BrNr={
+            url = f"https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={date_str}&BrNr={
                 week_number}&BrSt=1&BrVorh=Yes&T={TimeHelper.getActualTimestamp()}"
 
             # Convert line breaks in the message to <div> tags for HTML formatting
