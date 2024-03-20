@@ -18,7 +18,7 @@ class Entry:
         self.type = entry_type
 
 
-class Session():
+class Session:
     def __init__(self):
         """Initializes the Azubiheft session."""
         self.session: requests.sessions.Session = None
@@ -29,44 +29,43 @@ class Session():
             username: Username of the user.
             password: Password of the user.
         """
-        if (self.isLoggedIn()):
+        if self.isLoggedIn():
             raise AuthError("already logged in. Logout first")
 
         self.session = requests.session()
 
-        loginPageHtml = self.session.get(
-            'https://www.azubiheft.de/Login.aspx')
+        loginPageHtml = self.session.get("https://www.azubiheft.de/Login.aspx")
 
-        soup = BeautifulSoup(loginPageHtml.text, 'html.parser')
+        soup = BeautifulSoup(loginPageHtml.text, "html.parser")
 
-        viewstate = soup.find(id="__VIEWSTATE")['value']
-        viewstategenerator = soup.find(id="__VIEWSTATEGENERATOR")['value']
-        eventvalidation = soup.find(id="__EVENTVALIDATION")['value']
+        viewstate = soup.find(id="__VIEWSTATE")["value"]
+        viewstategenerator = soup.find(id="__VIEWSTATEGENERATOR")["value"]
+        eventvalidation = soup.find(id="__EVENTVALIDATION")["value"]
 
-        headers = {
-            'content-type': 'application/x-www-form-urlencoded'
+        headers = {"content-type": "application/x-www-form-urlencoded"}
+        formData = {
+            "__VIEWSTATE": viewstate,
+            "__VIEWSTATEGENERATOR": viewstategenerator,
+            "__EVENTVALIDATION": eventvalidation,
+            "ctl00$ContentPlaceHolder1$txt_Benutzername": username,
+            "ctl00$ContentPlaceHolder1$txt_Passwort": password,
+            "ctl00$ContentPlaceHolder1$chk_Persistent": "on",
+            "ctl00$ContentPlaceHolder1$cmd_Login": "Anmelden",
+            "ctl00$ContentPlaceHolder1$HiddenField_isMobile": "false",
         }
-        formData = {'__VIEWSTATE': viewstate,
-                    '__VIEWSTATEGENERATOR': viewstategenerator,
-                    '__EVENTVALIDATION': eventvalidation,
-                    'ctl00$ContentPlaceHolder1$txt_Benutzername': username,
-                    'ctl00$ContentPlaceHolder1$txt_Passwort': password,
-                    'ctl00$ContentPlaceHolder1$chk_Persistent': 'on',
-                    'ctl00$ContentPlaceHolder1$cmd_Login': 'Anmelden',
-                    'ctl00$ContentPlaceHolder1$HiddenField_isMobile': 'false'
-                    }
 
-        self.session.post('https://www.azubiheft.de/Login.aspx',
-                          headers=headers, data=formData)
-        if (not self.isLoggedIn()):
+        self.session.post(
+            "https://www.azubiheft.de/Login.aspx", headers=headers, data=formData
+        )
+        if not self.isLoggedIn():
             raise AuthError("login failed")
 
     def logout(self) -> None:
         """Logs out the user."""
-        if (not self.session):
+        if not self.session:
             raise NotLoggedInError("not logged in. Login first")
-        self.session.get('https://www.azubiheft.de/Azubi/Abmelden.aspx')
-        if (not self.isLoggedIn()):
+        self.session.get("https://www.azubiheft.de/Azubi/Abmelden.aspx")
+        if not self.isLoggedIn():
             self.session = None
 
     def isLoggedIn(self) -> bool:
@@ -74,14 +73,13 @@ class Session():
         - Returns:
             True if the user is logged in, False otherwise.
         """
-        if (not self.session):
+        if not self.session:
             return False
 
-        indexHtml = self.session.get(
-            'https://www.azubiheft.de/Azubi/Default.aspx').text
-        soup = BeautifulSoup(indexHtml, 'html.parser')
+        indexHtml = self.session.get("https://www.azubiheft.de/Azubi/Default.aspx").text
+        soup = BeautifulSoup(indexHtml, "html.parser")
         viewstate = soup.find(id="Abmelden")
-        if (viewstate):
+        if viewstate:
             return True
 
         return False
@@ -92,17 +90,20 @@ class Session():
         Returns a dictionary with '__VIEWSTATE', '__VIEWSTATEGENERATOR', and '__EVENTVALIDATION'.
         """
         setup_page = self.session.get(
-            'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx')
-        soup = BeautifulSoup(setup_page.text, 'html.parser')
+            "https://www.azubiheft.de/Azubi/SetupSchulfach.aspx"
+        )
+        soup = BeautifulSoup(setup_page.text, "html.parser")
 
         tokens = {
-            '__VIEWSTATE': soup.find(id="__VIEWSTATE")['value'],
-            '__VIEWSTATEGENERATOR': soup.find(id="__VIEWSTATEGENERATOR")['value'],
-            '__EVENTVALIDATION': soup.find(id="__EVENTVALIDATION")['value']
+            "__VIEWSTATE": soup.find(id="__VIEWSTATE")["value"],
+            "__VIEWSTATEGENERATOR": soup.find(id="__VIEWSTATEGENERATOR")["value"],
+            "__EVENTVALIDATION": soup.find(id="__EVENTVALIDATION")["value"],
         }
         return tokens
 
-    def _prepare_subjects_payload(self, subjects, new_subject=None, delete_subject_id=None):
+    def _prepare_subjects_payload(
+        self, subjects, new_subject=None, delete_subject_id=None
+    ):
         """
         Prepares payload for subject manipulation.
         - Parameters:
@@ -112,13 +113,12 @@ class Session():
         """
         payload = {}
         for subject in subjects:
-            if delete_subject_id and subject['id'] == delete_subject_id:
+            if delete_subject_id and subject["id"] == delete_subject_id:
                 continue
-            payload[f'ctl00$ContentPlaceHolder1$txt{
-                subject["id"]}'] = subject['name']
+            payload[f'ctl00$ContentPlaceHolder1$txt{subject["id"]}'] = subject["name"]
 
         if new_subject:
-            payload['txtNewSubject'] = new_subject
+            payload["txtNewSubject"] = new_subject
 
         return payload
 
@@ -131,19 +131,23 @@ class Session():
         current_subjects = self.getSubjects()
 
         # Generate a unique key for the new subject
-        new_subject_key = f'txt{int(time.time())}'
+        new_subject_key = f"txt{int(time.time())}"
 
         payload = {
-            '__VIEWSTATE': tokens['__VIEWSTATE'],
-            '__VIEWSTATEGENERATOR': tokens['__VIEWSTATEGENERATOR'],
-            '__EVENTVALIDATION': tokens['__EVENTVALIDATION'],
+            "__VIEWSTATE": tokens["__VIEWSTATE"],
+            "__VIEWSTATEGENERATOR": tokens["__VIEWSTATEGENERATOR"],
+            "__EVENTVALIDATION": tokens["__EVENTVALIDATION"],
             new_subject_key: subject_name,  # Add the new subject
-            **{f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"] for subj in current_subjects},
-            'ctl00$ContentPlaceHolder1$cmd_Save': 'Speichern'  # Include the save command
+            **{
+                f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"]
+                for subj in current_subjects
+            },
+            "ctl00$ContentPlaceHolder1$cmd_Save": "Speichern",  # Include the save command
         }
 
         response = self.session.post(
-            'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx', data=payload)
+            "https://www.azubiheft.de/Azubi/SetupSchulfach.aspx", data=payload
+        )
 
         if response.status_code != 200:
             print("Failed to add subject. Response code:", response.status_code)
@@ -163,17 +167,23 @@ class Session():
 
         # Constructing the payload
         payload = {
-            '__VIEWSTATE': tokens['__VIEWSTATE'],
-            '__VIEWSTATEGENERATOR': tokens['__VIEWSTATEGENERATOR'],
-            '__EVENTVALIDATION': tokens['__EVENTVALIDATION'],
-            'ctl00$ContentPlaceHolder1$HiddenLöschIDs': ',' + subject_id,  # Add leading comma
-            **{f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"] for subj in current_subjects if subj["id"] != subject_id},
-            'ctl00$ContentPlaceHolder1$cmd_Save': 'Speichern'
+            "__VIEWSTATE": tokens["__VIEWSTATE"],
+            "__VIEWSTATEGENERATOR": tokens["__VIEWSTATEGENERATOR"],
+            "__EVENTVALIDATION": tokens["__EVENTVALIDATION"],
+            "ctl00$ContentPlaceHolder1$HiddenLöschIDs": ","
+            + subject_id,  # Add leading comma
+            **{
+                f'ctl00$ContentPlaceHolder1$txt{subj["id"]}': subj["name"]
+                for subj in current_subjects
+                if subj["id"] != subject_id
+            },
+            "ctl00$ContentPlaceHolder1$cmd_Save": "Speichern",
         }
 
         # Sending the request
         response = self.session.post(
-            'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx', data=payload)
+            "https://www.azubiheft.de/Azubi/SetupSchulfach.aspx", data=payload
+        )
 
         if response.status_code != 200:
             print("Failed to delete subject. Response code:", response.status_code)
@@ -187,10 +197,10 @@ class Session():
         - Returns:
             Week ID for the given date.
         """
-        if (self.isLoggedIn()):
+        if self.isLoggedIn():
             url = "https://www.azubiheft.de/Azubi/Ausbildungsnachweise.aspx"
             overviewHtml = self.session.get(url).text
-            soup = BeautifulSoup(overviewHtml, 'html.parser')
+            soup = BeautifulSoup(overviewHtml, "html.parser")
             weekDivs = soup.find_all("div", class_="mo NBox")
 
             # Calculate the calendar week number
@@ -206,7 +216,7 @@ class Session():
                     kwYear = int(yearDiv.get_text(strip=True))
 
                     if kw == calendar_week and kwYear == year:
-                        weekId = div['onclick'].split("'")[1].split('=')[1]
+                        weekId = div["onclick"].split("'")[1].split("=")[1]
                         return weekId
 
             raise ValueError("No report found for the specified week")
@@ -218,26 +228,28 @@ class Session():
         - Returns:
             List of subjects.
         """
-        if (self.isLoggedIn()):
+        if self.isLoggedIn():
             staticSubjects = [
-                {'id': 1, 'name': 'Betrieb'},
-                {'id': 2, 'name': 'Schule'},
-                {'id': 3, 'name': 'ÜBA'},
-                {'id': 4, 'name': 'Urlaub'},
-                {'id': 5, 'name': 'Feiertag'},
-                {'id': 6, 'name': 'Arbeitsunfähig'},
-                {'id': 7, 'name': 'Frei'}
+                {"id": 1, "name": "Betrieb"},
+                {"id": 2, "name": "Schule"},
+                {"id": 3, "name": "ÜBA"},
+                {"id": 4, "name": "Urlaub"},
+                {"id": 5, "name": "Feiertag"},
+                {"id": 6, "name": "Arbeitsunfähig"},
+                {"id": 7, "name": "Frei"},
             ]
             subjectSetupHtml = self.session.get(
-                'https://www.azubiheft.de/Azubi/SetupSchulfach.aspx'
+                "https://www.azubiheft.de/Azubi/SetupSchulfach.aspx"
             ).text
-            soup = BeautifulSoup(subjectSetupHtml, 'html.parser')
-            subjectElements = soup.find(id='divSchulfach').find_all('input')
+            soup = BeautifulSoup(subjectSetupHtml, "html.parser")
+            subjectElements = soup.find(id="divSchulfach").find_all("input")
 
             subjects = []
             for subjectElement in subjectElements:
                 subject = {
-                    "id": subjectElement["data-default"], "name": subjectElement["value"]}
+                    "id": subjectElement["data-default"],
+                    "name": subjectElement["value"],
+                }
                 subjects.append(subject)
 
             return staticSubjects + subjects
@@ -254,44 +266,47 @@ class Session():
             raise NotLoggedInError("not logged in. Login first")
 
         headers = {
-            'x-my-ajax-request': 'ajax',
-            'Origin': 'https://www.azubiheft.de',
-            'Referer': 'https://www.azubiheft.de/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache',
+            "x-my-ajax-request": "ajax",
+            "Origin": "https://www.azubiheft.de",
+            "Referer": "https://www.azubiheft.de/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache",
         }
 
         for entry in entries:
             date_str = TimeHelper.dateTimeToString(entry.date)
             week_number = self.getReportWeekId(entry.date)
-            url = f"https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={date_str}&BrNr={
-                week_number}&BrSt=1&BrVorh=Yes&T={TimeHelper.getActualTimestamp()}"
+            url = f"https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={date_str}&BrNr={week_number}&BrSt=1&BrVorh=Yes&T={TimeHelper.getActualTimestamp()}"
 
             # Convert line breaks in the message to <div> tags for HTML formatting
-            formatted_message = "<div>" + \
-                "</div><div>".join(entry.message.split("\n")) + "</div>"
+            formatted_message = (
+                "<div>" + "</div><div>".join(entry.message.split("\n")) + "</div>"
+            )
             # URL-encode the formatted HTML
             encoded_message = urllib.parse.quote(formatted_message)
 
             formData = {
-                'disablePaste': '0',
-                'Seq': '0',
-                'Art_ID': str(entry.type),
-                'Abt_ID': '0',
-                'Dauer': entry.time_spent,
-                'Inhalt': encoded_message,  # Use the URL-encoded HTML message
-                'jsVer': '12'
+                "disablePaste": "0",
+                "Seq": "0",
+                "Art_ID": str(entry.type),
+                "Abt_ID": "0",
+                "Dauer": entry.time_spent,
+                "Inhalt": encoded_message,  # Use the URL-encoded HTML message
+                "jsVer": "12",
             }
 
             response = self.session.post(url, headers=headers, data=formData)
             if response.status_code != 200:
-                print(f"Failed to add entry for date {
-                      date_str}. Response code: {response.status_code}")
+                print(
+                    f"Failed to add entry for date {date_str}. Response code: {response.status_code}"
+                )
 
-    def writeReport(self, date: datetime, message: str, time_spent: str, entry_type: int) -> None:
+    def writeReport(
+        self, date: datetime, message: str, time_spent: str, entry_type: int
+    ) -> None:
         """Writes a report to the Azubiheft.
         - Parameters:
             date: Date of the report.
@@ -306,10 +321,12 @@ class Session():
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
 
-        url = "https://www.azubiheft.de/Azubi/Tagesbericht.aspx?Datum=" + \
-            TimeHelper.dateTimeToString(date)
+        url = (
+            "https://www.azubiheft.de/Azubi/Tagesbericht.aspx?Datum="
+            + TimeHelper.dateTimeToString(date)
+        )
         reportHtml = self.session.get(url).text
-        soup = BeautifulSoup(reportHtml, 'html.parser')
+        soup = BeautifulSoup(reportHtml, "html.parser")
 
         reports = []
 
@@ -318,8 +335,11 @@ class Session():
         for entry in entries:
             # Extract the duration and type of activity
             duration = entry.find("div", class_="row2 d4").get_text(strip=True)
-            activity_type = entry.find("div", class_="row1 d3").get_text(
-                strip=True).replace("Art: ", "")
+            activity_type = (
+                entry.find("div", class_="row1 d3")
+                .get_text(strip=True)
+                .replace("Art: ", "")
+            )
 
             # Extract and format the report text
             report_text_div = entry.find("div", class_="row7 d5")
@@ -328,20 +348,22 @@ class Session():
                 for br in report_text_div.find_all("br"):
                     br.replace_with("\n")
                 # Convert <div> tags to newline characters
-                report_text = '\n'.join([div.get_text(
-                    strip=True) for div in report_text_div.find_all("div", recursive=False)])
+                report_text = "\n".join(
+                    [
+                        div.get_text(strip=True)
+                        for div in report_text_div.find_all("div", recursive=False)
+                    ]
+                )
                 # If there are no <div> tags, get the whole text directly
                 if not report_text:
                     report_text = report_text_div.get_text("\n", strip=True)
             else:
                 # Concatenate all text without formatting
-                report_text = ' '.join(report_text_div.stripped_strings)
+                report_text = " ".join(report_text_div.stripped_strings)
 
-            reports.append({
-                "type": activity_type,
-                "duration": duration,
-                "text": report_text
-            })
+            reports.append(
+                {"type": activity_type, "duration": duration, "text": report_text}
+            )
 
         if len(reports) == 0:
             print("No Reports")
@@ -349,7 +371,7 @@ class Session():
             return reports
 
 
-class TimeHelper():
+class TimeHelper:
     @staticmethod
     def dateTimeToString(date: datetime) -> str:
         return date.strftime("%Y%m%d")
@@ -361,8 +383,8 @@ class TimeHelper():
     @staticmethod
     def timeDeltaToString(time: timedelta) -> str:
         maxTime = timedelta(hours=19, minutes=59)
-        if (time < maxTime):
-            formatted = ':'.join(str(time).split(':')[:2])
+        if time < maxTime:
+            formatted = ":".join(str(time).split(":")[:2])
             return formatted
         else:
-            raise ValueTooLargeError('Max time is ' + str(maxTime))
+            raise ValueTooLargeError("Max time is " + str(maxTime))
