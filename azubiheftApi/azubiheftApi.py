@@ -2,12 +2,13 @@
 # azubiheft.com web-api
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from datetime import datetime, timedelta
 from .errors import AuthError, ValueTooLargeError, NotLoggedInError
 import time
 from typing import List
 import urllib.parse
+import re
 
 
 class Entry:
@@ -256,6 +257,13 @@ class Session:
 
         else:
             raise NotLoggedInError("not logged in. Login first")
+        
+    def get_art_id_from_text(self, subject_name: str) -> str:
+        subjects = self.getSubjects()  # Retrieve all subjects
+        for subject in subjects:
+            if subject_name in subject['name']:
+                return subject['id']
+        return None  # Return None if no match found
 
     def writeReports(self, entries: List[Entry]) -> None:
         """Writes a list of reports to the Azubiheft.
@@ -314,9 +322,10 @@ class Session:
             time_spent: Time spent on the report.
             entry_type: Type of the report.
         """
-        entry = Entry(date, message, time_spent, entry_type)
-        self.writeReports([entry])
-
+        if time_spent.strip() != "00:00":
+            entry = Entry(date, message, time_spent, entry_type)
+            self.writeReports([entry])
+            
     def getReport(self, date: datetime, include_formatting: bool = False):
         if not self.isLoggedIn():
             raise NotLoggedInError("not logged in. Login first")
@@ -335,11 +344,14 @@ class Session:
         for entry in entries:
             # Extract the duration and type of activity
             duration = entry.find("div", class_="row2 d4").get_text(strip=True)
+            if duration.strip() == "00:00":
+                continue
             activity_type = (
                 entry.find("div", class_="row1 d3")
                 .get_text(strip=True)
                 .replace("Art: ", "")
             )
+            seq = entry.get("data-seq")  # Extract the sequence number
 
             # Extract and format the report text
             report_text_div = entry.find("div", class_="row7 d5")
@@ -347,28 +359,104 @@ class Session:
                 # Replace <br> tags with newline characters
                 for br in report_text_div.find_all("br"):
                     br.replace_with("\n")
-                # Convert <div> tags to newline characters
-                report_text = "\n".join(
-                    [
-                        div.get_text(strip=True)
-                        for div in report_text_div.find_all("div", recursive=False)
-                    ]
-                )
-                # If there are no <div> tags, get the whole text directly
-                if not report_text:
-                    report_text = report_text_div.get_text("\n", strip=True)
+
+                # Convert <div> tags to newline characters while preserving whitespace
+                report_text_parts = []
+                for element in report_text_div.contents:
+                    if isinstance(element, NavigableString):
+                        report_text_parts.append(str(element))
+                    elif element.name == "div":
+                        report_text_parts.append("\n" + element.get_text(strip=False))
+
+                report_text = "".join(report_text_parts)
+                report_text = re.sub(r"\n+", "\n", report_text.strip())
             else:
                 # Concatenate all text without formatting
                 report_text = " ".join(report_text_div.stripped_strings)
 
             reports.append(
-                {"type": activity_type, "duration": duration, "text": report_text}
+                {
+                    "seq": seq,
+                    "type": activity_type,
+                    "duration": duration,
+                    "text": report_text,
+                }
             )
 
         if len(reports) == 0:
             print("No Reports")
         else:
             return reports
+        
+    def deleteReport(self, date: datetime, entry_number: int = None) -> None:
+        if not self.isLoggedIn():
+            raise NotLoggedInError("not logged in. Login first")
+
+        # Retrieve the report for the specified date
+        report_entries = self.getReport(date)
+        if not report_entries:
+            print("No report entries found for this date.")
+            return
+
+        if entry_number is None:
+            # Display report entries and ask user which to delete
+            for i, entry in enumerate(report_entries, 1):
+                print(
+                    f"{i}. {entry['type']} - {entry['text']} - {entry['duration']}")
+            print("all. Delete all entries")
+            choice = input(
+                "Select the number of the entry to delete (or 'all' to delete everything): ")
+        else:
+            choice = str(entry_number)
+
+        if choice.isdigit():
+            choice = int(choice) - 1
+            if choice < 0 or choice >= len(report_entries):
+                print("Invalid entry number.")
+                return
+            entries_to_delete = [report_entries[choice]]
+        elif choice == "all":
+            entries_to_delete = report_entries
+        else:
+            print("Invalid choice.")
+            return
+
+        # Retrieve the week number for the specified date
+        week_number = self.getReportWeekId(date)
+
+        headers = {
+            'x-my-ajax-request': 'ajax',
+            'Origin': 'https://www.azubiheft.de',
+            'Referer': 'https://www.azubiheft.de/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
+        }
+
+        # Loop through and delete each selected entry
+        for entry in entries_to_delete:
+            formData = {
+                'disablePaste': '0',
+                'Seq': f"-{entry['seq']}",
+                'Art_ID': self.get_art_id_from_text(entry['type']),
+                'Abt_ID': '0',
+                'Dauer': entry['duration'],
+                'Inhalt': entry['text'],
+                'jsVer': '12'
+            }
+
+            url = f"https://www.azubiheft.de/Azubi/XMLHttpRequest.ashx?Datum={TimeHelper.dateTimeToString(
+                date)}&BrNr={week_number}&BrSt=1&BrVorh=Yes&T={TimeHelper.getActualTimestamp()}"
+
+            response = self.session.post(url, headers=headers, data=formData)
+            if response.status_code != 200:
+                print(f"Failed to delete entry: {
+                      entry['text']}. Response code: {response.status_code}")
+            else:
+                print(f"Entry deleted successfully: {entry['text']}")
+
 
 
 class TimeHelper:
