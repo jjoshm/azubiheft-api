@@ -43,6 +43,9 @@ jobs:
             echo "VERSION_CHANGED=false" >> $GITHUB_ENV
         fi
 
+    - name: Run tests
+      run: python -m unittest discover tests
+
     - name: Build package
       if: env.VERSION_CHANGED == 'true'
       run: python -m build
