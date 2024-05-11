@@ -22,6 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install build requests
         pip install setuptools
+        pip install bs4
 
     - name: Check if version has changed
       id: check_version
@@ -42,6 +43,11 @@ jobs:
             echo "Version has not changed. Skipping publishing."
             echo "VERSION_CHANGED=false" >> $GITHUB_ENV
         fi
+
+    - name: Run tests
+      run: |
+        pip install -e .
+        python -m unittest discover tests
 
     - name: Build package
       if: env.VERSION_CHANGED == 'true'

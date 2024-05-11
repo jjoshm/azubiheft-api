@@ -47,6 +47,7 @@ azubiheft.delete_subject("subjectId")
 report = azubiheft.getReport(datetime(2023, 10, 19))
 print(report)
 
+
 # Get a week's report ID
 week_id = azubiheft.getReportWeekId(datetime.now())
 print(week_id)
@@ -62,6 +63,10 @@ azubiheft.writeReport(datetime(2023, 10, 19), "Hello World", "2:00", 1)
 # Fetch the report again to see changes
 report = azubiheft.getReport(datetime(2023, 10, 19), include_formatting=True)  #  include_formatting=True to include formatting
 print(report)
+
+
+# delete a report entry
+azubiheft.deleteReport(datetime(2023, 10, 19))
 
 
 # Log out from the session
