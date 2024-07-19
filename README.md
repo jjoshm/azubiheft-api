@@ -4,7 +4,8 @@
 [![Downloads](https://static.pepy.tech/badge/azubiheftapi/month)](https://pepy.tech/project/azubiheftapi)
 [![Downloads](https://static.pepy.tech/badge/azubiheftapi/week)](https://pepy.tech/project/azubiheftapi)
 
-This library provides a Python wrapper for azubiheft.com. With this library, developers can easily manage their Ausbildung (training) reports through a script, allowing for enhanced automation and better control over their Ausbildung documentation.
+This library provides a Python wrapper for "azubiheft.de"
+With this library, developers can easily manage their Ausbildung (training) reports through a script, allowing for enhanced automation and better control over their Ausbildung documentation.
 
 ## 📖 About Azubiheft
 
